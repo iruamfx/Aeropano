@@ -9,7 +9,7 @@ int main()
 
     std::vector<cv::KeyPoint> kp1, kp2;
     cv::Mat des1, des2;
-       
+
     orb->detectAndCompute(imgs[0], cv::noArray(), kp1, des1); //Processamento da imagem para reconhecer feature points e retornar seus kps
     orb->detectAndCompute(imgs[1], cv::noArray(), kp2, des2); //-e descriptors
 
@@ -19,9 +19,9 @@ int main()
     bfmatcher->match(des1, des2, matches);
 
     //Executa algoritmo organizacional por distancia em "matches"
-    std::sort(matches.begin(), matches.end(), [](const cv::DMatch& a, const cv::DMatch& b) { 
+    std::sort(matches.begin(), matches.end(), [](const cv::DMatch& a, const cv::DMatch& b) {
         return a.distance < b.distance;
-    });
+        });
 
     cv::Mat imgMatches;
     cv::drawMatches(imgs[0], kp1, imgs[1], kp2, matches, imgMatches);
@@ -30,4 +30,3 @@ int main()
 
     return 0;
 }
-
