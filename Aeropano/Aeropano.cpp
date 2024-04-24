@@ -2,31 +2,49 @@
 #include <iostream>
 
 
-int main()
+int main(int argc, char* argv[])
 {
-    cv::Mat imgs[] = { cv::imread("imgs/t5.jpeg"), cv::imread("imgs/t6.jpeg") };
-    cv::Ptr<cv::ORB> orb = cv::ORB::create(); //Construtor do ORB retorna ptr da instancia (?)
+    const std::string path1 = "C:\\Workspace\\CPP\\Aeropano\\Aeropano\\imgs\\t5.jpeg";
+    const std::string path2 = "C:\\Workspace\\CPP\\Aeropano\\Aeropano\\imgs\\t6.jpeg";
+    std::vector<cv::Mat> imgs = {cv::imread(path1), cv::imread(path2)};
+    cv::Stitcher::Mode mode = cv::Stitcher::PANORAMA; //TODO: add argument handling
+    bool crop;
 
-    std::vector<cv::KeyPoint> kp1, kp2;
-    cv::Mat des1, des2;
+#pragma region Argument Handling
 
-    orb->detectAndCompute(imgs[0], cv::noArray(), kp1, des1); //Processamento da imagem para reconhecer feature points e retornar seus kps
-    orb->detectAndCompute(imgs[1], cv::noArray(), kp2, des2); //-e descriptors
 
-    cv::Ptr<cv::BFMatcher> bfmatcher = cv::BFMatcher::create(cv::NORM_HAMMING);
-    std::vector<cv::DMatch> matches;
 
-    bfmatcher->match(des1, des2, matches);
+	for (int i = 0; i < argc; i++)
+	{
+        std::string arg = argv[i];
+        size_t imPos = arg.find("-im"); // Verifica se a substring "-im" está presente
+        size_t cropPos = arg.find("crop"); // Verifica se a substring "-im" está presente
 
-    //Executa algoritmo organizacional por distancia em "matches"
-    std::sort(matches.begin(), matches.end(), [](const cv::DMatch& a, const cv::DMatch& b) {
-        return a.distance < b.distance;
-        });
+        if (imPos != std::string::npos) // std::string::npos é um valor especial para representar um retorno de size_t nulo.
+        {
+            arg.erase(imPos, 3); // 3 é o tamanho da substring "-im"
+            imgs.push_back(cv::imread(arg));
+        }
 
-    cv::Mat imgMatches;
-    cv::drawMatches(imgs[0], kp1, imgs[1], kp2, matches, imgMatches);
-    cv::imshow("Feature Matches:", imgMatches);
+        if (cropPos != std::string::npos) // std::string::npos é um valor especial para representar um retorno de size_t nulo.
+        {
+            crop = true;
+        }
+	}
+
+#pragma endregion
+
+    cv::Mat pano;
+    cv::Ptr<cv::Stitcher> stitcher = cv::Stitcher::create(mode);
+    cv::Stitcher::Status status = stitcher->stitch(imgs, pano);
+
+    if (status != cv::Stitcher::OK)
+    {
+        std::cout << "Can't stitch images, error code = " << status << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    cv::imshow("Pano", pano);
     cv::waitKey(0);
-
-    return 0;
+    return EXIT_SUCCESS;
 }
